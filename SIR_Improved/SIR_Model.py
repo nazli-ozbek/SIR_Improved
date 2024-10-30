@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 #Mba >> the proportion of B that travels to A / stay during Dba weeks
 #weeks >> duration of the disease
 
-def SIR_Model(Na, Nb, Ia0, Ib0, Ra, Rb, Ka, Kb, Mab, Mba, weeks):
+def SIR_Model(Na, Nb, Ia0, Ib0, Reca, Recb, Ka, Kb, Mab, Mba, weeks, d):
     #initial SIR for A
     Sa = np.empty(weeks + 1)
     Ia = np.empty(weeks + 1)
@@ -47,7 +47,28 @@ def SIR_Model(Na, Nb, Ia0, Ib0, Ra, Rb, Ka, Kb, Mab, Mba, weeks):
     Iba[0] = 0
     Rba[0] = 0
 
-    # for t in range(weeks):
+    for t in range(weeks):
+        #SIR for A
+        Sa = Na - Ia[t] - Ra[t] - Sab[t-1]
+        Ia = Ia[t-1] - Reca * Ia[t-1] + Ka * Sa[t-1] * (Ia[t-1] + Iab[t-1])
+        Ra = Ra[t-1] + Reca * Ia[t-1]
+
+        # SIR for B
+        Sb = Nb - Ib[t] - Rb[t] - Sba[t - 1]
+        Ib = Ib[t - 1] - Recb * Ib[t - 1] + Kb * Sb[t - 1] * (Ib[t - 1] + Iba[t - 1])
+        Rb = Rb[t - 1] + Recb * Ib[t - 1]
+
+        #SIR for A to B
+        Sab[t] = Sab[t-1] + Sa[t] * Mab[t]
+        Iab[t] = Iab[t-1] - Rab[t-1] + Ia[t] * Mab
+        Rab[t] = Rab[t-1] + Ra[t] * Mab
+
+        # SIR for B to A
+        Sba[t] = Sba[t - 1] + Sb[t] * Mba[t]
+        Iba[t] = Iba[t - 1] - Rba[t - 1] + Ib[t] * Mba
+        Rba[t] = Rba[t - 1] + Rb[t] * Mba
+
+
 
 
 
