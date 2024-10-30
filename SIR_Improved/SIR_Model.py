@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 #Mba >> the proportion of B that travels to A / stay during Dba weeks
 #weeks >> duration of the disease
 
-def SIR_Model(Na, Nb, Ia0, Ib0, Reca, Recb, Ka, Kb, Mab, Mba, weeks, d):
+def SIR_Model(Na, Nb, Ia0, Ib0, Reca, Recb, Ka, Kb, Mab, Mba, weeks):
     #initial SIR for A
     Sa = np.empty(weeks + 1)
     Ia = np.empty(weeks + 1)
@@ -47,32 +47,100 @@ def SIR_Model(Na, Nb, Ia0, Ib0, Reca, Recb, Ka, Kb, Mab, Mba, weeks, d):
     Iba[0] = 0
     Rba[0] = 0
 
-    for t in range(weeks):
+    for t in range(1,weeks + 1):
         #SIR for A
-        Sa = Na - Ia[t] - Ra[t] - Sab[t-1]
-        Ia = Ia[t-1] - Reca * Ia[t-1] + Ka * Sa[t-1] * (Ia[t-1] + Iab[t-1])
-        Ra = Ra[t-1] + Reca * Ia[t-1]
+        Ra[t] = Ra[t - 1] + Reca * Ia[t - 1] - Mab * Ra[t -1]
+        Ia[t] = Ia[t-1] - Mab*Ia[t-1] + Ka*Sa[t-1]*(Ia[t-1] + Iab[t-1]) - Reca * Ia[t-1]
+        Sa[t] = Sa[t-1] - Mab*Sa[t-1] - Ia[t] - Ra[t]
+        print("A " , Ra[t] + Ia[t] + Sa[t])
 
         # SIR for B
-        Sb = Nb - Ib[t] - Rb[t] - Sba[t - 1]
-        Ib = Ib[t - 1] - Recb * Ib[t - 1] + Kb * Sb[t - 1] * (Ib[t - 1] + Iba[t - 1])
-        Rb = Rb[t - 1] + Recb * Ib[t - 1]
+        Rb[t] = Rb[t - 1] + Recb * Ib[t - 1] - Mba * Rb[t - 1]
+        Ib[t] = Ib[t - 1] - Mba * Ib[t - 1] + Kb * Sb[t - 1] * (Ib[t - 1] + Iba[t - 1]) - Recb * Ib[t - 1]
+        Sb[t] = Sb[t - 1] - Mba * Sb[t - 1] - Ib[t] - Rb[t]
+        print("B " , Rb[t] + Ib[t] + Sb[t])
 
         #SIR for A to B
-        Sab[t] = Sab[t-1] + Sa[t] * Mab[t]
-        Iab[t] = Iab[t-1] - Rab[t-1] + Ia[t] * Mab
-        Rab[t] = Rab[t-1] + Ra[t] * Mab
+        Rab[t] = Mab * Ra[t] + Rab[t-1] + Iab[t-1] * Reca
+        Iab[t] = Mab * Ia[t] + Iab[t-1] - Iab[t-1] * Reca
+        Sab[t] =  Sa[t] * Mab + Sab[t - 1]
+        print("AB " , Rab[t] + Iab[t] + Sab[t])
+
 
         # SIR for B to A
-        Sba[t] = Sba[t - 1] + Sb[t] * Mba[t]
-        Iba[t] = Iba[t - 1] - Rba[t - 1] + Ib[t] * Mba
-        Rba[t] = Rba[t - 1] + Rb[t] * Mba
+        Rba[t] = Mba * Rb[t] + Rba[t - 1] + Iba[t - 1] * Recb
+        Iba[t] = Mba * Ib[t] + Iba[t - 1] - Iba[t - 1] * Recb
+        Sba[t] = Sb[t] * Mba + Sba[t - 1]
+        print("BA " ,Rba[t] + Iba[t] + Sba[t])
+
+        print("Total", Ra[t] + Ia[t] + Sa[t] + Rb[t] + Ib[t] + Sb[t] + Rab[t] + Iab[t] + Sab[t] + Rba[t] + Iba[t] + Sba[t] )
 
 
+        # Plotting the results
+        plt.figure(figsize=(15, 12))
 
+        # Group A SIR
+        plt.subplot(4, 1, 1)
+        plt.plot(range(weeks + 1), Sa, 'b-', label='Susceptible A')
+        plt.plot(range(weeks + 1), Ia, 'r-', label='Infected A')
+        plt.plot(range(weeks + 1), Ra, 'g-', label='Recovered A')
+        plt.title('SIR Model for Group A')
+        plt.xlabel('Weeks')
+        plt.ylabel('Population')
+        plt.legend()
+        plt.grid(True)
 
+        # Group B SIR
+        plt.subplot(4, 1, 2)
+        plt.plot(range(weeks + 1), Sb, 'b-', label='Susceptible B')
+        plt.plot(range(weeks + 1), Ib, 'r-', label='Infected B')
+        plt.plot(range(weeks + 1), Rb, 'g-', label='Recovered B')
+        plt.title('SIR Model for Group B')
+        plt.xlabel('Weeks')
+        plt.ylabel('Population')
+        plt.legend()
+        plt.grid(True)
 
+        # Travelers from A to B
+        plt.subplot(4, 1, 3)
+        plt.plot(range(weeks + 1), Sab, 'b-', label='Susceptible in B from A')
+        plt.plot(range(weeks + 1), Iab, 'r-', label='Infected in B from A')
+        plt.plot(range(weeks + 1), Rab, 'g-', label='Recovered in B from A')
+        plt.title('Travelers from A to B')
+        plt.xlabel('Weeks')
+        plt.ylabel('Population')
+        plt.legend()
+        plt.grid(True)
+
+        # Travelers from B to A
+        plt.subplot(4, 1, 4)
+        plt.plot(range(weeks + 1), Sba, 'b-', label='Susceptible in A from B')
+        plt.plot(range(weeks + 1), Iba, 'r-', label='Infected in A from B')
+        plt.plot(range(weeks + 1), Rba, 'g-', label='Recovered in A from B')
+        plt.title('Travelers from B to A')
+        plt.xlabel('Weeks')
+        plt.ylabel('Population')
+        plt.legend()
+        plt.grid(True)
+
+        plt.tight_layout()
+        plt.savefig('SIR_Model_Travelers.png')
+        plt.show()
 
 
 if __name__ == "__main__":
-    SIR_Model(5, 1000, 24, 5/3, 0.00140704)
+    # Example parameters
+    Na = 1000  # Population of group A
+    Nb = 1000  # Population of group B
+    Ia0 = 5  # Initial infected in group A
+    Ib0 = 0  # Initial infected in group B
+    weeks = 50  # Simulation duration in weeks
+
+    Reca = 0.1  # Recovery rate for group A
+    Recb = 0.1  # Recovery rate for group B
+    Ka = 0.3  # Transmission coefficient for group A
+    Kb = 0.3  # Transmission coefficient for group B
+    Mab = 0.1  # Proportion of A traveling to B
+    Mba = 0.1  # Proportion of B traveling to A
+
+    SIR_Model(Na, Nb, Ia0, Ib0, Reca, Recb, Ka, Kb, Mab, Mba, weeks)
