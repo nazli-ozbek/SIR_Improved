@@ -2,114 +2,86 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def SIR_Model(Na, Nb, Ka, Kb, Ra, Rb, Mab, Mba, Dab, Dba, weeks):
-    # Initialize populations (SIR for A, B, AB, and BA)
-    Sa, Ia, Ra_ = [Na * 0.99], [Na * 0.01], [0]   # S, I, R for group A
-    Sb, Ib, Rb_ = [Nb], [0], [0]       # S, I, R for group B
+    # Initialize arrays for populations (SIR for A, B, AB, and BA) with np.empty
+    Sa = np.empty(weeks + 1)
+    Ia = np.empty(weeks + 1)
+    Ra_ = np.empty(weeks + 1)
 
-    # Visitors from A in B (AB) and from B in A (BA)
-    Sab, Iab, Rab = [0], [0], [0]  # A's population visiting B
-    Sba, Iba, Rba = [0], [0], [0]  # B's population visiting A
+    Sb = np.empty(weeks + 1)
+    Ib = np.empty(weeks + 1)
+    Rb_ = np.empty(weeks + 1)
+
+    Sab = np.empty(weeks + 1)
+    Iab = np.empty(weeks + 1)
+    Rab = np.empty(weeks + 1)
+
+    Sba = np.empty(weeks + 1)
+    Iba = np.empty(weeks + 1)
+    Rba = np.empty(weeks + 1)
+
+    # Initial conditions
+    Sa[0] = Na * 0.99
+    Ia[0] = Na * 0.01
+    Ra_[0] = 0
+
+    Sb[0] = Nb * 0.99
+    Ib[0] = Nb * 0.01
+    Rb_[0] = 0
 
     # Simulation loop
-    for n in range(weeks):
-        # Calculate visitor inflows and outflows
-        inflow_Sab = Mab * Sa[n] / Dab
-        inflow_Iab = Mab * Ia[n] / Dab
-        inflow_Rab = Mab * Ra_[n] / Dab
+    for t in range(1, weeks + 1):
+        # Visitor inflows and outflows, all groups now included
+        inflow_Sab = Mab * Sa[t - 1] / Dab
+        inflow_Iab = Mab * Ia[t - 1] / Dab
+        inflow_Rab = Mab * Ra_[t - 1] / Dab
 
-        inflow_Sba = Mba * Sb[n] / Dba
-        inflow_Iba = Mba * Ib[n] / Dba
-        inflow_Rba = Mba * Rb_[n] / Dba
+        inflow_Sba = Mba * Sb[t - 1] / Dba
+        inflow_Iba = Mba * Ib[t - 1] / Dba
+        inflow_Rba = Mba * Rb_[t - 1] / Dba
 
-        outflow_Sa = Mab * Sa[n] / Dab
-        outflow_Sb = Mba * Sb[n] / Dba
+        outflow_Sa = Mab * Sa[t - 1] / Dab
+        outflow_Ia = Mab * Ia[t - 1] / Dab
+        outflow_Ra = Mab * Ra_[t - 1] / Dab
+
+        outflow_Sb = Mba * Sb[t - 1] / Dba
+        outflow_Ib = Mba * Ib[t - 1] / Dba
+        outflow_Rb = Mba * Rb_[t - 1] / Dba
 
         # Update group A (local population)
-        Sa_next = max(0, min(Na, Sa[n] - Ka * Sa[n] * Ia[n] + inflow_Sba - outflow_Sa))
-        Ia_next = max(0, min(Na - Sa_next, Ia[n] + Ka * Sa[n] * Ia[n] - Ra * Ia[n]))
-        Ra_next = max(0, min(Na - Sa_next - Ia_next, Ra_[n] + Ra * Ia[n] + inflow_Rba))
+        Sa[t] = max(0, min(Na, Sa[t - 1] - Ka * Sa[t - 1] * Ia[t - 1] + inflow_Sba - outflow_Sa))
+        Ia[t] = max(0, min(Na - Sa[t], Ia[t - 1] + Ka * Sa[t - 1] * Ia[t - 1] - Ra * Ia[t - 1] + inflow_Iba - outflow_Ia))
+        Ra_[t] = max(0, min(Na - Sa[t] - Ia[t], Ra_[t - 1] + Ra * Ia[t - 1] + inflow_Rba - outflow_Ra))
+
 
         # Update group B (local population)
-        Sb_next = max(0, min(Nb, Sb[n] - Kb * Sb[n] * Ib[n] + inflow_Sab - outflow_Sb))
-        Ib_next = max(0, min(Nb - Sb_next, Ib[n] + Kb * Sb[n] * Ib[n] - Rb * Ib[n]))
-        Rb_next = max(0, min(Nb - Sb_next - Ib_next, Rb_[n] + Rb * Ib[n] + inflow_Rab))
+        Sb[t] = max(0, min(Nb, Sb[t - 1] - Kb * Sb[t - 1] * Ib[t - 1] + inflow_Sab - outflow_Sb))
+        Ib[t] = max(0, min(Nb - Sb[t], Ib[t - 1] + Kb * Sb[t - 1] * Ib[t - 1] - Rb * Ib[t - 1] + inflow_Iab - outflow_Ib))
+        Rb_[t] = max(0, min(Nb - Sb[t] - Ib[t], Rb_[t - 1] + Rb * Ib[t - 1] + inflow_Rab - outflow_Rb))
+
 
         # Update visitors from A in B (AB)
-        Sab_next = max(0, inflow_Sab - Kb * Sab[n] * Ib[n])
-        Iab_next = max(0, inflow_Iab + Kb * Sab[n] * Ib[n] - Rb * Iab[n])
-        Rab_next = max(0, inflow_Rab + Rb * Iab[n])
+        Sab[t] = max(0, inflow_Sab - Kb * Sab[t - 1] * Ib[t - 1])
+        Iab[t] = max(0, inflow_Iab + Kb * Sab[t - 1] * Ib[t - 1] - Rb * Iab[t - 1])
+        Rab[t] = max(0, inflow_Rab + Rb * Iab[t - 1])
+
 
         # Update visitors from B in A (BA)
-        Sba_next = max(0, inflow_Sba - Ka * Sba[n] * Ia[n])
-        Iba_next = max(0, inflow_Iba + Ka * Sba[n] * Ia[n] - Ra * Iba[n])
-        Rba_next = max(0, inflow_Rba + Ra * Iba[n])
+        Sba[t] = max(0, inflow_Sba - Ka * Sba[t - 1] * Ia[t - 1])
+        Iba[t] = max(0, inflow_Iba + Ka * Sba[t - 1] * Ia[t - 1] - Ra * Iba[t - 1])
+        Rba[t] = max(0, inflow_Rba + Ra * Iba[t - 1])
 
-        # Append results for the next step
-        Sa.append(Sa_next)
-        Ia.append(Ia_next)
-        Ra_.append(Ra_next)
-
-        Sb.append(Sb_next)
-        Ib.append(Ib_next)
-        Rb_.append(Rb_next)
-
-        Sab.append(Sab_next)
-        Iab.append(Iab_next)
-        Rab.append(Rab_next)
-
-        Sba.append(Sba_next)
-        Iba.append(Iba_next)
-        Rba.append(Rba_next)
+        print(Sa[t]+Ia[t]+Ra_[t]+ Sb[t]+Ib[t]+Rb_[t]+Sab[t]+Iab[t]+Rab[t]+Sba[t]+Iba[t]+Rba[t])
 
     return (Sa, Ia, Ra_, Sb, Ib, Rb_, Sab, Iab, Rab, Sba, Iba, Rba)
 
-def plot_results(time, Sa, Ia, Ra_, Sb, Ib, Rb_, Sab, Iab, Rab, Sba, Iba, Rba):
-    fig, axs = plt.subplots(4, 1, figsize=(12, 20))  # 4 rows, 1 column
-
-    # Plot 1: Group A (Local Population)
-    axs[0].plot(time, Sa, label='Susceptible A', color='green')
-    axs[0].plot(time, Ia, label='Infected A', color='red')
-    axs[0].plot(time, Ra_, label='Recovered A', color='blue')
-    axs[0].set_title('Group A (Local Population)')
-    axs[0].legend()
-
-    # Plot 2: Group B (Local Population)
-    axs[1].plot(time, Sb, label='Susceptible B', color='green')
-    axs[1].plot(time, Ib, label='Infected B', color='red')
-    axs[1].plot(time, Rb_, label='Recovered B', color='blue')
-    axs[1].set_title('Group B (Local Population)')
-    axs[1].legend()
-
-    # Plot 3: Visitors from A in B (AB)
-    axs[2].plot(time, Sab, label='Susceptible AB', color='orange')
-    axs[2].plot(time, Iab, label='Infected AB', color='purple')
-    axs[2].plot(time, Rab, label='Recovered AB', color='cyan')
-    axs[2].set_title('Visitors from A in B (AB)')
-    axs[2].legend()
-
-    # Plot 4: Visitors from B in A (BA)
-    axs[3].plot(time, Sba, label='Susceptible BA', color='orange')
-    axs[3].plot(time, Iba, label='Infected BA', color='purple')
-    axs[3].plot(time, Rba, label='Recovered BA', color='cyan')
-    axs[3].set_title('Visitors from B in A (BA)')
-    axs[3].legend()
-
-    # Final adjustments
-    for ax in axs:
-        ax.set_xlabel('Weeks')
-        ax.set_ylabel('Number of Individuals')
-
-    plt.tight_layout()
-    plt.show()
-
 if __name__ == "__main__":
     # Parameters
-    Na, Nb = 1000, 800             # Population sizes of groups A and B
-    Ka, Kb = 0.002, 0.001          # Transmission coefficients for A and B
-    Ra, Rb = 0.1, 0.1              # Recovery rates for A and B
-    Mab, Mba = 0.05, 0.03          # Movement rates between A and B
-    Dab, Dba = 2, 3                # Average stay durations in weeks
-    weeks = 500                     # Duration of the simulation
+    Na, Nb = 1000, 800  # Population sizes of groups A and B
+    Ka, Kb = 0.002, 0.001  # Transmission coefficients for A and B
+    Ra, Rb = 0.1, 0.1  # Recovery rates for A and B
+    Mab, Mba = 0.05, 0.03  # Movement rates between A and B
+    Dab, Dba = 2, 3  # Average stay durations in weeks
+    weeks = 100  # Duration of the simulation
 
     # Run the SIR model
     results = SIR_Model(Na, Nb, Ka, Kb, Ra, Rb, Mab, Mba, Dab, Dba, weeks)
@@ -118,4 +90,44 @@ if __name__ == "__main__":
     time = np.arange(weeks + 1)
 
     # Plot the results
-    plot_results(time, *results)
+    fig, axs = plt.subplots(2, 2, figsize=(18, 12))  # 2x2 grid, larger figure size
+
+    # Plot 1: Group A (Local Population)
+    axs[0, 0].plot(time, results[0], label='Susceptible A', color='green', linewidth=2)
+    axs[0, 0].plot(time, results[1], label='Infected A', color='red', linewidth=2)
+    axs[0, 0].plot(time, results[2], label='Recovered A', color='blue', linewidth=2)
+    axs[0, 0].set_title('Group A (Local Population)', fontsize=16)
+    axs[0, 0].legend(fontsize=10)
+    axs[0, 0].tick_params(axis='both', which='major', labelsize=10)
+
+    # Plot 2: Group B (Local Population)
+    axs[0, 1].plot(time, results[3], label='Susceptible B', color='green', linewidth=2)
+    axs[0, 1].plot(time, results[4], label='Infected B', color='red', linewidth=2)
+    axs[0, 1].plot(time, results[5], label='Recovered B', color='blue', linewidth=2)
+    axs[0, 1].set_title('Group B (Local Population)', fontsize=16)
+    axs[0, 1].legend(fontsize=10)
+    axs[0, 1].tick_params(axis='both', which='major', labelsize=10)
+
+    # Plot 3: Visitors from A in B (AB)
+    axs[1, 0].plot(time, results[6], label='Susceptible AB', color='orange', linewidth=2)
+    axs[1, 0].plot(time, results[7], label='Infected AB', color='purple', linewidth=2)
+    axs[1, 0].plot(time, results[8], label='Recovered AB', color='cyan', linewidth=2)
+    axs[1, 0].set_title('Visitors from A in B (AB)', fontsize=16)
+    axs[1, 0].legend(fontsize=10)
+    axs[1, 0].tick_params(axis='both', which='major', labelsize=10)
+
+    # Plot 4: Visitors from B in A (BA)
+    axs[1, 1].plot(time, results[9], label='Susceptible BA', color='orange', linewidth=2)
+    axs[1, 1].plot(time, results[10], label='Infected BA', color='purple', linewidth=2)
+    axs[1, 1].plot(time, results[11], label='Recovered BA', color='cyan', linewidth=2)
+    axs[1, 1].set_title('Visitors from B in A (BA)', fontsize=16)
+    axs[1, 1].legend(fontsize=10)
+    axs[1, 1].tick_params(axis='both', which='major', labelsize=10)
+
+    # Final adjustments
+    for ax in axs.flat:
+        ax.set_xlabel('Weeks', fontsize=12)
+        ax.set_ylabel('Population', fontsize=12)
+
+    plt.tight_layout()
+    plt.show()
