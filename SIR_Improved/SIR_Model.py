@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 # weeks >> duration of the disease
 
 def SIR_Model(Na, Nb, Ka, Kb, Reca, Recb, Mab, Mba, Dab, Dba, weeks):
+    #Creation of arrays
     Sa = np.empty(weeks + 1)
     Ia = np.empty(weeks + 1)
     Ra = np.empty(weeks + 1)
@@ -29,6 +30,7 @@ def SIR_Model(Na, Nb, Ka, Kb, Reca, Recb, Mab, Mba, Dab, Dba, weeks):
     Iba = np.empty(weeks + 1)
     Rba = np.empty(weeks + 1)
 
+    #Initialization of SIR of A and B
     Sa[0] = Na * 0.99
     Ia[0] = Na * 0.01
     Ra[0] = 0
@@ -38,6 +40,7 @@ def SIR_Model(Na, Nb, Ka, Kb, Reca, Recb, Mab, Mba, Dab, Dba, weeks):
     Rb[0] = 0
 
     for t in range(1, weeks + 1):
+        #Calculation of inflow and outflows
         inflow_Sab = Mab * Sa[t - 1] / Dab
         inflow_Iab = Mab * Ia[t - 1] / Dab
         inflow_Rab = Mab * Ra[t - 1] / Dab
@@ -54,6 +57,7 @@ def SIR_Model(Na, Nb, Ka, Kb, Reca, Recb, Mab, Mba, Dab, Dba, weeks):
         outflow_Ib = Mba * Ib[t - 1] / Dba
         outflow_Rb = Mba * Rb[t - 1] / Dba
 
+        #Application of difference equations
         # A
         Sa[t] = max(0, min(Na, Sa[t - 1] - Ka * Sa[t - 1] * Ia[t - 1] + inflow_Sba - outflow_Sa))
         Ia[t] = max(0, min(Na - Sa[t] - Ra[t], Ia[t - 1] + Ka * Sa[t - 1] * Ia[t - 1] - Reca * Ia[t - 1] + inflow_Iba - outflow_Ia))
@@ -75,6 +79,7 @@ def SIR_Model(Na, Nb, Ka, Kb, Reca, Recb, Mab, Mba, Dab, Dba, weeks):
         Rba[t] = max(0, inflow_Rba + Reca * Iba[t - 1])
 
 
+    #Plotting
     time = np.arange(weeks + 1)
 
     fig, axs = plt.subplots(2, 2, figsize=(18, 12))
