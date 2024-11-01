@@ -122,6 +122,7 @@ def SIR_Model(Na, Nb, Ka, Kb, Reca, Recb, Mab, Mba, Dab, Dba, weeks):
 
     plt.tight_layout()
     plt.show()
+    plt.savefig('SIR_Improved.png')
 
 if __name__ == "__main__":
     Na, Nb = 1000, 800
